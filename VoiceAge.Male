@@ -1,0 +1,38 @@
+#include <iostream>
+#include <sapi.h>
+
+int main()
+{
+    CoInitialize(NULL);
+
+    ISpVoice* pVoice = NULL;
+    HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void**)&pVoice);
+
+    if (SUCCEEDED(hr))
+    {
+        // Set the voice to a semi-male voice
+        hr = pVoice->SetVoice(NULL); // Use default voice
+        if (SUCCEEDED(hr))
+        {
+            ISpObjectToken* pToken = NULL;
+            hr = SpFindBestToken(SPCAT_VOICES, L"gender=male;age=adult", NULL, &pToken);
+            if (SUCCEEDED(hr))
+            {
+                hr = pVoice->SetVoice(pToken);
+                pToken->Release();
+            }
+        }
+
+        // Speak the desired text
+        if (SUCCEEDED(hr))
+        {
+            pVoice->Speak(L"Hello, this is a semi-male voice.", 0, NULL);
+        }
+
+        pVoice->Release();
+    }
+
+    CoUninitialize();
+
+    return 0;
+}
