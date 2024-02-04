@@ -1,0 +1,61 @@
+#include <iostream>
+#include <sapi.h>
+
+int main()
+{
+    CoInitialize(NULL);
+
+    ISpVoice* pVoice = NULL;
+    HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void**)&pVoice);
+
+    if (SUCCEEDED(hr))
+    {
+        // Set the voice to a fizzy female monster voice
+        ISpObjectToken* pToken = NULL;
+        hr = SpFindBestToken(SPCAT_VOICES, L"gender=female;age=adult", NULL, &pToken);
+        if (SUCCEEDED(hr))
+        {
+            hr = pVoice->SetVoice(pToken);
+            pToken->Release();
+        }
+
+        // Manipulate the audio to create a fizzy effect
+        ISpObjectWithToken* pAudioObj = NULL;
+        hr = pVoice->QueryInterface(IID_ISpObjectWithToken, (void**)&pAudioObj);
+        if (SUCCEEDED(hr))
+        {
+            IPropertyStore* pProps = NULL;
+            hr = pAudioObj->GetStorageFileName(GUID_NULL, L"", &pProps);
+            if (SUCCEEDED(hr))
+            {
+                PROPVARIANT varRate;
+                PropVariantInit(&varRate);
+                varRate.vt = VT_R4;
+                varRate.fltVal = 2.0f; // Increase the rate for a fizzy effect
+
+                hr = pProps->SetValue(PKEY_Speech_OverrideRate, varRate);
+                if (SUCCEEDED(hr))
+                {
+                    hr = pAudioObj->SetStorageFileName(GUID_NULL, L"", pProps);
+                }
+
+                PropVariantClear(&varRate);
+                pProps->Release();
+            }
+
+            pAudioObj->Release();
+        }
+
+        // Speak the desired text
+        if (SUCCEEDED(hr))
+        {
+            pVoice->Speak(L"Hello, this is a fizzy female monster voice.", 0, NULL);
+        }
+
+        pVoice->Release();
+    }
+
+    CoUninitialize();
+
+    return 0;
+}
